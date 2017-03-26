@@ -9,29 +9,59 @@ public class Segment {
 	Node nodeid1, nodeid2;
 	Road road;
 	double length;
-	ArrayList<Location> coords;
 	boolean highlight = false;
+
 	Dimension dimension;
 	int height, width;
 
-	public Segment(int roadid, Node nodeid1, Node nodeid2, double length, ArrayList<Location> coords, Dimension dimension) {
+	ArrayList<Location> coords;
+
+	/**
+	 * 
+	 * @param roadid
+	 * @param nodeid1
+	 * @param nodeid2
+	 * @param length
+	 * @param coords
+	 * @param dimension
+	 */
+	public Segment(int roadid, Node nodeid1, Node nodeid2, double length, ArrayList<Location> coords,
+			Dimension dimension) {
 		this.roadid = roadid;
 		this.nodeid1 = nodeid1;
 		this.nodeid2 = nodeid2;
 		this.length = length;
 		this.coords = coords;
-		this.height = dimension.height/2;
-		this.width = dimension.width/2;
+		this.height = dimension.height / 2;
+		this.width = dimension.width / 2;
 	}
 
+	/**
+	 * Highlights the segment if it's selected in the onClick method
+	 * 
+	 * @param state
+	 */
+	public void highlight(boolean highlight) {
+		this.highlight = highlight;
+	}
+
+	/**
+	 * Draws the segment. If selected it will draw the segments in orange
+	 * 
+	 * @param g
+	 * @param origin
+	 * @param scale
+	 */
 	public void draw(Graphics g, Location origin, double scale) {
 		if (highlight == true) {
 			g.setColor(Color.ORANGE);
 		} else {
 			g.setColor(Color.decode("#4c4c4c"));
 		}
+
 		Location start, end;
 		Point startPoint, endPoint;
+
 		for (int i = 0; i < coords.size() - 1; i++) {
 			start = coords.get(i);
 			end = coords.get(i + 1);
@@ -41,6 +71,11 @@ public class Segment {
 		}
 	}
 
+	/**
+	 * Moves the segment in the given direction
+	 * 
+	 * @param dir
+	 */
 	public void move(String dir) {
 		for (int i = 0; i < coords.size(); i++) {
 			if (dir == "north") {
@@ -53,29 +88,5 @@ public class Segment {
 				coords.set(i, (coords.get(i).moveBy(10, 0)));
 			}
 		}
-	}
-
-	public void highlight(boolean state) {
-		highlight = state;
-	}
-
-	public int returnRoadid() {
-		return roadid;
-	}
-
-	public Node returnNodeid1() {
-		return nodeid1;
-	}
-
-	public Node returnNodeid2() {
-		return nodeid2;
-	}
-
-	public double returnLength() {
-		return length;
-	}
-
-	public List<Location> returnCoord() {
-		return coords;
 	}
 }

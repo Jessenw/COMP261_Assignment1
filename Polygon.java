@@ -3,10 +3,16 @@ import java.util.List;
 
 public class Polygon {
 
-	private Integer type;
-	private List<Location> coords;
-	private int width, height;
+	Integer type;
+	List<Location> coords;
+	int width, height;
 
+	/**
+	 * 
+	 * @param type
+	 * @param coords
+	 * @param dimension
+	 */
 	public Polygon(Integer type, List<Location> coords, Dimension dimension) {
 		this.type = type;
 		this.coords = coords;
@@ -14,22 +20,11 @@ public class Polygon {
 		this.height = dimension.height / 2;
 	}
 
-	public int getType() {
-		return type;
-	}
-
-	public void setType(int type) {
-		this.type = type;
-	}
-
-	public List<Location> getCoords() {
-		return coords;
-	}
-
-	public void setCoords(List<Location> coords) {
-		this.coords = coords;
-	}
-
+	/**
+	 * Moves the polygon in the given direction
+	 * 
+	 * @param dir
+	 */
 	public void move(String dir) {
 		for (int i = 0; i < coords.size(); i++) {
 			if (dir == "north") {
@@ -52,9 +47,15 @@ public class Polygon {
 		}
 	}
 
+	/**
+	 * Draws the polygon
+	 * 
+	 * @param g
+	 * @param origin
+	 * @param scale
+	 */
 	public void draw(Graphics g, Location origin, double scale) {
 		if (type <= 19 && type >= 1) {
-			//
 			g.setColor(Color.decode("0xC7C9C8"));
 		} else if (type <= 39 && type >= 20) {
 			// Sets the color of the parks/forests/reserves

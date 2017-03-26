@@ -3,20 +3,17 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-import javax.swing.JTextField;
-
 public class DigitalMap extends GUI {
+
 	static Map<Integer, Node> nodesMap = new HashMap<Integer, Node>();
 	static Map<Integer, Road> roadsMap = new HashMap<Integer, Road>();
 	static Map<Integer, Segment> segmentMap = new HashMap<Integer, Segment>();
+	static ArrayList<Segment> segmentList = new ArrayList<Segment>();
 	static Set<Polygon> polygonSet = new HashSet<Polygon>();
-	// List<String> roadLabels = new ArrayList<String>(); // Used for searching
-	// for trie
 
 	private Location origin, topLeft, bottomRight;
 	private double scale;
@@ -27,15 +24,9 @@ public class DigitalMap extends GUI {
 
 	Node selectedNode;
 	ArrayList<Segment> selectedSegs = new ArrayList<Segment>();
-	Trie trie = new Trie(); // Initializes trie structure which is used for
-							// prefix search
+	Trie trie = new Trie();
 
 	@Override
-	/*
-	 * Iterates through the nodesMap and segmentSet collections and calls draw
-	 * on each object. Passes origin and scale parameters which is used for zoom
-	 * in/out
-	 */
 	protected void redraw(Graphics g) {
 		for (Polygon polygon : polygonSet) {
 			polygon.draw(g, origin, scale);
@@ -45,47 +36,53 @@ public class DigitalMap extends GUI {
 			n.draw(g, origin, scale);
 		}
 
-		for (Segment s : segmentMap.values()) {
+		for(Segment s : segmentList){
 			s.draw(g, origin, scale);
 		}
 	}
 
 	@Override
 	protected void onClick(MouseEvent e) {
-		int allowance = 10; // How close to a node the user must click to
-							// register selection
+		// How close to a node the user must click to register selection
+		int tolerance = 10;
+
 		String outputString = "";
 		Set<String> output = new HashSet<String>();
 
 		for (Node n : nodesMap.values()) {
-			if (e.getX() < (n.point.x + allowance + width) && e.getX() > (n.point.x - allowance + width)
-					&& e.getY() < (n.point.y + allowance + height) && e.getY() > (n.point.y - allowance + height)) {
+			if (e.getX() < (n.point.x + tolerance + width) && e.getX() > (n.point.x - tolerance + width)
+					&& e.getY() < (n.point.y + tolerance + height) && e.getY() > (n.point.y - tolerance + height)) {
 
-				getTextOutputArea().setText(""); // If a new node is selected,
-													// reset text output area
+				// Resets text output area
+				getTextOutputArea().setText("");
+
 				if (selectedNode != null) {
-					selectedNode.highlight(false); // If there is a previously
-													// selected node unselect it
+					// If there is a previously selected node unselect it
+					selectedNode.highlight(false);
 				}
 
 				n.highlight(true);
 				selectedNode = n;
 				getTextOutputArea().append("Intersection ID: " + n.id + ", ");
 
-				// Retrieves associated road names based on inSegs and outSegs
-				// road id's
+				/*
+				 * Retrieves roads labels of roads which are connected to the
+				 * node
+				 */
 				for (Segment s : n.inSegs) {
 					for (Road r : roadsMap.values()) {
 						if (s.roadid == r.ID)
 							output.add(r.label);
 					}
 				}
+
 				for (Segment s : n.outSegs) {
 					for (Road r : roadsMap.values()) {
 						if (s.roadid == r.ID)
 							output.add(r.label);
 					}
 				}
+
 				for (String o : output)
 					outputString = outputString + o + ", ";
 				break; // Forces there to only be one node selected at a time
@@ -96,25 +93,30 @@ public class DigitalMap extends GUI {
 
 	@Override
 	protected void onSearch() {
+		// Resets previously selected segments
 		for (Segment s : selectedSegs) {
 			s.highlight(false);
 		}
-		getTextOutputArea().setText(""); // Resets text output area
+		// Resets text output area
+		getTextOutputArea().setText("");
 
-		String search = getSearchBox().getText();
-		ArrayList<String> values = trie.search(search);
-		int size = 0;
+		String search = getSearchBox().getText(); // Gets string from search box
+		ArrayList<String> values = trie.search(search); // Gets values from trie
+		int size = 0; // Variable to make sure only 10 values are printed
 
-		if (values.isEmpty())
+		if (values.isEmpty()) {
 			getTextOutputArea().append("No roads found with given prefix");
-		else if (values.size() > 10)
+		} else if (values.size() > 10) {
 			size = 10;
-		else
+		} else {
 			size = values.size();
+		}
+
 		for (int i = 0; i < size; i++) {
 			String str = values.get(i);
 			getTextOutputArea().append(str + ",  \n");
-			for (Road r : roadsMap.values()) { // highlighting road
+			// highlights segments in values
+			for (Road r : roadsMap.values()) {
 				if (r.label.equals(str)) {
 					ArrayList<Segment> segs = r.segs;
 					for (Segment s : segs) {
@@ -134,7 +136,8 @@ public class DigitalMap extends GUI {
 		} else if (m == Move.ZOOM_OUT) {
 			scale = scale / 1.2;
 		}
-		/* --Move-- */
+
+		/* --Move Nodes-- */
 		for (Node n : nodesMap.values()) {
 			if (m == Move.NORTH) {
 				n.move("north");
@@ -146,8 +149,9 @@ public class DigitalMap extends GUI {
 				n.move("west");
 			}
 		}
+
 		/* --Moves Segments-- */
-		for (Segment s : segmentMap.values()) {
+		for (Segment s : segmentList) {
 			if (m == Move.NORTH) {
 				s.move("north");
 			} else if (m == Move.EAST) {
@@ -158,6 +162,7 @@ public class DigitalMap extends GUI {
 				s.move("west");
 			}
 		}
+
 		/* --Moves Polygons-- */
 		for (Polygon p : polygonSet) {
 			if (m == Move.NORTH) {
@@ -174,12 +179,12 @@ public class DigitalMap extends GUI {
 
 	@Override
 	protected void onLoad(File nodes, File roads, File segments, File polygons) {
-
 		BufferedReader nodesReader, roadsReader, segmentsReader, polyReader;
 
-		/* -- Node -- */
+		/* --Node-- */
 		try {
 			// Sets initial Northern, Southern, Easter and Western most points
+			// at the center of Auckland
 			double NORTH_LAT = -36.84;
 			double SOUTH_LAT = -36.84;
 			double WEST_LON = 174.76;
@@ -189,8 +194,8 @@ public class DigitalMap extends GUI {
 			nodesReader = new BufferedReader(new FileReader(nodes));
 
 			while ((currentLine = nodesReader.readLine()) != null) {
-				String[] values = currentLine.split("\t"); // Splits current
-															// line at each tab
+				String[] values = currentLine.split("\t");
+
 				int nodeID = Integer.parseInt(values[0]);
 				double lat = Double.parseDouble(values[1]);
 				double lon = Double.parseDouble(values[2]);
@@ -198,8 +203,9 @@ public class DigitalMap extends GUI {
 
 				nodesMap.put(nodeID, new Node(nodeID, lat, lon, location, this.dimension));
 
-				// Checking if current lat and lon are the furtherest point out
-				// from the centre
+				// Checks if the current latitude or longitude are further from
+				// the center compared to the previously set latitude and
+				// longitude
 				if (lat > NORTH_LAT) {
 					NORTH_LAT = lat;
 				}
@@ -231,8 +237,7 @@ public class DigitalMap extends GUI {
 			roadsReader.readLine(); // Skips over the first line
 
 			while ((currentLine = roadsReader.readLine()) != null) {
-				String[] values = currentLine.split("\t"); // Splits current
-															// line at each tab
+				String[] values = currentLine.split("\t");
 				int roadID = Integer.parseInt(values[0]);
 				String label = values[2];
 				String city = values[3];
@@ -276,9 +281,11 @@ public class DigitalMap extends GUI {
 				}
 				Segment newSeg = new Segment(roadid, nodeid1, nodeid2, length, coords, this.dimension);
 				segmentMap.put(roadid, newSeg);
+				segmentList.add(newSeg);
+				// unsure if these are the right way around
 				nodeid1.addToStart(newSeg);
 				nodeid2.addToEnd(newSeg);
-				roadobj.addSeg(newSeg);
+				roadobj.segs.add(newSeg);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -289,38 +296,40 @@ public class DigitalMap extends GUI {
 			polyReader = new BufferedReader(new FileReader(polygons));
 			String line;
 			Integer type = null;
-			String coordsString;
-			List<String> coordPairs;
+			String allCoords;
+			List<String> allCoordsSplit;
 			List<Location> coords;
+			String values[];
 
 			while ((line = polyReader.readLine()) != null) {
 
-				// Set type
-				if (line.split("=").length == 2 && line.split("=")[0].equals("Type")) {
-					type = Integer.decode(line.split("=")[1]);
+				// Type
+				if (line.contains("Type")) {
+					values = line.split("=");
+					type = Integer.decode(values[1]);
 				}
 
-				// Set coords
-				if (line.split("=").length == 2 && line.split("=")[0].startsWith("Data")) {
-
-					coordsString = line.split("=")[1];
-					coordPairs = Arrays
-							.asList(coordsString.substring(1, coordsString.lastIndexOf(')')).split("\\),\\("));
+				// Data
+				if (line.contains("Data")) {
+					allCoords = line.split("=")[1];
+					// Takes the first and last bracket out
+					allCoords = allCoords.substring(1, allCoords.lastIndexOf(')'));
+					// Splits the list
+					allCoordsSplit = Arrays.asList(allCoords.split("\\),\\("));
 					coords = new ArrayList<Location>();
 
-					for (String coordPair : coordPairs) {
-						double lat = Double.parseDouble(coordPair.split(",")[0]);
-						double lon = Double.parseDouble(coordPair.split(",")[1]);
+					for (String coord : allCoordsSplit) {
+						double lat = Double.parseDouble(coord.split(",")[0]);
+						double lon = Double.parseDouble(coord.split(",")[1]);
 						Location location = Location.newFromLatLon(lat, lon);
 						coords.add(location);
 					}
-
 					polygonSet.add(new Polygon(type, coords, dimension));
 				}
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("IOException" + e);
 		}
 	}
 

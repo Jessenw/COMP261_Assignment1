@@ -26,9 +26,9 @@ public class Segment {
 
 	public void draw(Graphics g, Location origin, double scale) {
 		if (highlight == true) {
-			g.setColor(Color.GREEN);
+			g.setColor(Color.ORANGE);
 		} else {
-			g.setColor(Color.BLUE);
+			g.setColor(Color.decode("#4c4c4c"));
 		}
 		Location start, end;
 		Point startPoint, endPoint;

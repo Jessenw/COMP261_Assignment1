@@ -34,13 +34,13 @@ public class Node {
 
 	public void draw(Graphics g, Location origin, double scale) {
 		point = new Point(location.asPoint(origin, scale));
+		g.setColor(Color.decode("#4c4c4c"));
+		g.fillRect((int) point.x + width, (int) point.y + height, size, size);
 		if (highlight) { // Draws are green box to highlight node when selected
-							// by the onClick method
-			g.setColor(Color.GREEN);
+			// by the onClick method
+			g.setColor(Color.ORANGE);
 			g.fillRect((int) point.x - 4 + width, (int) point.y - 4 + height, 8, 8);
 		}
-		g.setColor(Color.BLACK);
-		g.fillRect((int) point.x + width, (int) point.y + height, size, size);
 	}
 
 	public void move(String dir) {

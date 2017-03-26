@@ -91,8 +91,7 @@ public abstract class GUI {
 	 * @param polygons
 	 *            a File for polygon-shapes.mp
 	 */
-	protected abstract void onLoad(File nodes, File roads, File segments,
-			File polygons);
+	protected abstract void onLoad(File nodes, File roads, File segments, File polygons);
 
 	// here are some useful methods you'll need.
 
